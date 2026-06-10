@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Sender | Dark</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+            background-color: #0f0f11;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 40%);
+            color: #e4e4e7;
+        }
+
+        .container {
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Еле заметное свечение сверху */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #a1a1aa;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #a1a1aa;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #52525b;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: #6366f1;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+        }
+
+        button:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #3f3f46;
+            color: #a1a1aa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #status {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            min-height: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .success { color: #34d399; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+        
+        /* Индикатор работы бота на фоне */
+        .polling-indicator {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #34d399;
+            box-shadow: 0 0 10px #34d399;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+            70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+            100% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="polling-indicator" title="Сайт готов к привязке"></div>
+        <h1>Telegram Sender</h1>
+        <div class="subtitle">Secure Messaging System</div>
+        
+        <div class="input-group">
+            <label for="chatId">Код привязки (или ID группы):</label>
+            <input type="text" id="chatId" placeholder="Например: 5">
+            <div class="hint">Напишите <b>.привязка</b> в вашей Telegram группе, и бот выдаст вам цифру от 1 до 9. Введите её сюда.</div>
+        </div>
+
+        <div class="input-group">
+            <label for="message">Текст сообщения:</label>
+            <textarea id="message" placeholder="Введите ваше сообщение..."></textarea>
+        </div>
+
+        <button id="sendBtn" onclick="sendMessage()">Отправить сообщение</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const BOT_TOKEN = '8680944941:AAFzOyJEa2WAqJPCHOFcLnivPagbQ0TXaZA';
+        
+        // Храним связки Код -> ChatID в памяти браузера, чтобы не терять при обновлении
+        let chatBindings = JSON.parse(localStorage.getItem('chatBindings') || '{}');
+        let lastUpdateId = 0;
+
+        // Функция для отслеживания входящих сообщений (Long Polling)
+        async function pollUpdates() {
+            try {
+                // Запрашиваем новые сообщения у бота
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.ok && data.result.length > 0) {
+                    for (const update of data.result) {
+                        lastUpdateId = update.update_id;
+                        
+                        // Если кто-то написал ".привязка"
+                        if (update.message && update.message.text && update.message.text.trim().toLowerCase() === '.привязка') {
+                            const chatId = update.message.chat.id;
+                            
+                            // Генерируем случайный код от 1 до 9
+                            const bindCode = Math.floor(Math.random() * 9) + 1;
+                            
+                            // Запоминаем: код -> ID чата
+                            chatBindings[bindCode.toString()] = chatId;
+                            localStorage.setItem('chatBindings', JSON.stringify(chatBindings));
+                            
+                            // Отвечаем прямо в группу
+                            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    chat_id: chatId,
+                                    text: `✅ <b>Успешно!</b>\nВаш код привязки: <b>${bindCode}</b>\n\nВведите эту цифру на сайте в поле "Код привязки".`,
+                                    parse_mode: 'HTML'
+                                })
+                            });
+
+                            // Оповещаем пользователя на сайте
+                            const statusEl = document.getElementById('status');
+                            statusEl.textContent = `✅ Привязка группы к коду ${bindCode} успешна!`;
+                            statusEl.className = 'info';
+                            setTimeout(() => {
+                                if(statusEl.className === 'info') statusEl.textContent = '';
+                            }, 5000);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+            
+            // Запускаем снова для непрерывного прослушивания
+            pollUpdates();
+        }
+
+        // Начинаем слушать входящие сообщения
+        pollUpdates();
+
+        async function sendMessage() {
+            const inputValue = document.getElementById('chatId').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const statusEl = document.getElementById('status');
+            const btn = document.getElementById('sendBtn');
+
+            if (!inputValue || !message) {
+                statusEl.textContent = 'Пожалуйста, заполните все поля!';
+                statusEl.className = 'error';
+                return;
+            }
+
+            // Проверяем, есть ли такой код в памяти. Если нет - пробуем использовать сам ввод как ID.
+            const realChatId = chatBindings[inputValue] || inputValue;
+
+            statusEl.textContent = 'Отправка...';
+            statusEl.className = '';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: realChatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    statusEl.textContent = '✅ Сообщение успешно отправлено!';
+                    statusEl.className = 'success';
+                    document.getElementById('message').value = ''; 
+                } else {
+                    statusEl.textContent = '❌ Ошибка: ' + (data.description || 'Неизвестная ошибка');
+                    statusEl.className = 'error';
+                }
+            } catch (error) {
+                statusEl.textContent = '❌ Ошибка сети при отправке.';
+                statusEl.className = 'error';
+            } finally {
+                btn.disabled = false;
+                
+                setTimeout(() => {
+                    if(statusEl.className === 'success') {
+                        statusEl.textContent = '';
+                        statusEl.className = '';
+                    }
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
