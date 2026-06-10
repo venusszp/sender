@@ -3,143 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Sender | Dark</title>
+    <title>Telegram Sender | Dark Elite</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: 'Inter', sans-serif;
-            background-color: #0f0f11;
+            background-color: #0b0b0d;
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 40%),
-                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15), transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15), transparent 50%);
             color: #e4e4e7;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
-        .container {
-            background: rgba(24, 24, 27, 0.7);
-            backdrop-filter: blur(16px);
+        /* Окна блокировок (Пароль / Очередь) */
+        .overlay-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(11, 11, 13, 0.95);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .overlay-card {
+            background: rgba(20, 20, 23, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 24px;
             padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
             width: 100%;
-            max-width: 420px;
-            position: relative;
-            overflow: hidden;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+            animation: containerAppear 0.5s ease both;
         }
 
-        /* Еле заметное свечение сверху */
+        .overlay-card h2 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .overlay-card p {
+            color: #a1a1aa;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .kick-timer {
+            font-size: 13px;
+            color: #6366f1;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* Главный контейнер приложения */
+        .container {
+            background: rgba(20, 20, 23, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 40px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7), 
+                        0 0 50px -10px rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            overflow: hidden;
+            animation: containerAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+            display: none; /* Покажется после успешной проверки */
+        }
+
         .container::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.6), rgba(168, 85, 247, 0.6), transparent);
+        }
+
+        .user-badge-id {
+            position: absolute;
+            top: 22px;
+            left: 24px;
+            font-size: 11px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #818cf8;
         }
 
         h1 {
             text-align: center;
-            margin-top: 0;
+            margin-top: 15px;
             margin-bottom: 8px;
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 26px;
+            font-weight: 700;
             color: #fff;
+            letter-spacing: -0.5px;
+            animation: textReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
         }
 
         .subtitle {
             text-align: center;
             font-size: 13px;
             color: #a1a1aa;
-            margin-bottom: 32px;
+            margin-bottom: 35px;
+            letter-spacing: 0.5px;
+            animation: textReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
         }
 
         .input-group {
             margin-bottom: 24px;
+            animation: textReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
         }
 
         label {
             display: block;
             margin-bottom: 8px;
             font-size: 13px;
-            font-weight: 500;
-            color: #a1a1aa;
+            font-weight: 600;
+            color: #94a3b8;
         }
 
         input[type="text"],
+        input[type="password"],
         textarea {
             width: 100%;
-            padding: 14px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.3);
             color: #fff;
             font-size: 15px;
             font-family: 'Inter', sans-serif;
             box-sizing: border-box;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         input[type="text"]:focus,
+        input[type="password"]:focus,
         textarea:focus {
             outline: none;
-            border-color: #6366f1;
-            background: rgba(0, 0, 0, 0.4);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            border-color: #818cf8;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
         }
 
         textarea {
             resize: vertical;
-            min-height: 120px;
+            min-height: 110px;
         }
 
         input::placeholder,
         textarea::placeholder {
-            color: #52525b;
+            color: #4b5563;
         }
 
         .hint {
             font-size: 12px;
-            color: #71717a;
+            color: #6b7280;
             margin-top: 8px;
-            line-height: 1.4;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        button {
+        .fix-toggle {
+            background: rgba(39, 39, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #71717a;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .fix-toggle.enabled {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+            border-color: rgba(139, 92, 246, 0.6);
+            color: #f5f3ff;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), inset 0 0 4px rgba(168, 85, 247, 0.3);
+        }
+
+        .fix-toggle .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #71717a;
+            transition: all 0.3s ease;
+        }
+
+        .fix-toggle.enabled .dot {
+            background: #a78bfa;
+            box-shadow: 0 0 10px #a78bfa, 0 0 20px #a78bfa;
+        }
+
+        .btn-wrapper {
+            animation: textReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+            position: relative;
+        }
+
+        button.main-action-btn {
             width: 100%;
-            padding: 16px;
+            height: 52px;
             border: none;
-            border-radius: 12px;
-            background: #6366f1;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
             color: white;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 4px 20px 0 rgba(99, 102, 241, 0.4);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
-        button:hover {
-            background: #4f46e5;
+        button.main-action-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+            filter: brightness(1.1);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background: #3f3f46;
-            color: #a1a1aa;
+        button.main-action-btn:disabled {
+            background: #27272a;
+            color: #71717a;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+
+        button#sendBtn {
+            width: 100%;
+            height: 52px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 4px 20px 0 rgba(99, 102, 241, 0.4);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        button#sendBtn .btn-text {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        button#sendBtn .success-icon {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            opacity: 0;
+            transform: scale(0.5) rotate(-20deg);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        button#sendBtn .success-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+        }
+
+        button#sendBtn.loading {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        button#sendBtn.loading .btn-text {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        button#sendBtn.sent {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+        }
+
+        button#sendBtn.sent .btn-text {
+            opacity: 0;
+            transform: scale(0.7);
+        }
+
+        button#sendBtn.sent .success-icon {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+
+        button#sendBtn.sent .success-icon svg {
+            animation: drawCheck 0.4s ease forwards 0.1s;
+        }
+
+        button#sendBtn:hover:not(:disabled):not(.sent) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+            filter: brightness(1.1);
+        }
+
+        button#sendBtn:active:not(:disabled):not(.sent) {
+            transform: translateY(1px);
+        }
+
+        button#sendBtn:disabled:not(.loading):not(.sent) {
+            background: #27272a;
+            color: #71717a;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            filter: none;
         }
 
         #status {
@@ -148,14 +362,12 @@
             font-size: 14px;
             font-weight: 500;
             min-height: 20px;
-            transition: opacity 0.3s ease;
         }
 
-        .success { color: #34d399; }
-        .error { color: #f87171; }
+        .success { color: #34d399; animation: pulseText 0.3s ease; }
+        .error { color: #f87171; animation: shake 0.4s ease; }
         .info { color: #60a5fa; }
         
-        /* Индикатор работы бота на фоне */
         .polling-indicator {
             position: absolute;
             top: 24px;
@@ -164,102 +376,987 @@
             height: 8px;
             border-radius: 50%;
             background-color: #34d399;
-            box-shadow: 0 0 10px #34d399;
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 12px #34d399;
+            animation: pulseCircle 2s infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
-            70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+        .chat-monitor {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.5s ease;
+        }
+
+        .chat-monitor.active {
+            opacity: 1;
+            max-height: 500px;
+            margin-top: 28px;
+        }
+
+        .chat-monitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .chat-monitor-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .clear-chat-btn {
+            background: transparent;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #f87171;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-chat-btn:hover {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: #f87171;
+            color: #fff;
+        }
+
+        .chat-messages {
+            max-height: 260px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+        }
+
+        .msg-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            animation: msgSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) both;
+            transition: all 0.3s ease;
+        }
+
+        .msg-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(2px);
+        }
+
+        .msg-item.msg-own {
+            border-left: 3px solid #818cf8;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .msg-item.msg-group {
+            border-left: 3px solid #c084fc;
+        }
+
+        .msg-item.msg-deleted {
+            border-left: 3px solid #f87171 !important;
+            background: rgba(248, 113, 113, 0.07) !important;
+            opacity: 0.75;
+        }
+
+        .msg-item.msg-deleted .msg-text {
+            color: #fca5a5 !important;
+            text-decoration: line-through;
+        }
+
+        .msg-deleted-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+            text-transform: uppercase;
+            text-decoration: none !important;
+        }
+
+        .msg-sender-site-id {
+            font-size: 10px;
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.15);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            color: #fff;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .msg-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .msg-content {
+            flex-grow: 1;
+        }
+
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .msg-author {
+            font-weight: 600;
+            color: #c7d2fe;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .msg-time {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .msg-text {
+            color: #e4e4e7;
+            font-size: 13px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .msg-media {
+            margin-top: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-width: 100%;
+            display: block;
+        }
+
+        .msg-media img {
+            max-width: 100%;
+            max-height: 150px;
+            display: block;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .msg-media img:hover {
+            transform: scale(1.02);
+        }
+
+        .error-log-panel {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(248, 113, 113, 0.15);
+        }
+
+        .error-log-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: #ef4444;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .error-log-clear {
+            background: transparent;
+            border: none;
+            color: #71717a;
+            font-size: 10px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .error-log-clear:hover {
+            color: #a1a1aa;
+        }
+
+        .error-log-box {
+            background: rgba(15, 11, 11, 0.6);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 10px;
+            padding: 10px 14px;
+            max-height: 95px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            color: #fca5a5;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .error-log-box::-webkit-scrollbar {
+            width: 3px;
+        }
+        .error-log-box::-webkit-scrollbar-thumb {
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 4px;
+        }
+
+        .error-log-item {
+            line-height: 1.4;
+            word-break: break-all;
+            animation: textReveal 0.2s ease-out both;
+        }
+
+        .error-log-time {
+            color: #ef4444;
+            margin-right: 6px;
+        }
+
+        @keyframes containerAppear {
+            from { opacity: 0; transform: translateY(40px) scale(0.97); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes textReveal {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes msgSlideIn {
+            from { opacity: 0; transform: translateY(15px) scale(0.95); filter: blur(2px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes pulseCircle {
+            0% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); }
+            70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
             100% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        @keyframes pulseText {
+            0% { transform: scale(0.98); opacity: 0.8; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes drawCheck {
+            to { stroke-dashoffset: 0; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="polling-indicator" title="Сайт готов к привязке"></div>
+    <div id="authOverlay" class="overlay-screen" style="display: none;">
+        <div class="overlay-card">
+            <h2 id="authTitle">Проверка доступа</h2>
+            <p id="authDesc">Пожалуйста, пройдите проверку безопасности для входа в систему управления.</p>
+            <div class="input-group" style="text-align: left;">
+                <label for="authPasswordInput" id="authLabel">Введите пароль:</label>
+                <input type="password" id="authPasswordInput" placeholder="••••••••">
+            </div>
+            <button class="main-action-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Подтвердить</button>
+            <div id="authError" style="color: #f87171; font-size: 13px; margin-top: 15px; font-weight: 500;"></div>
+        </div>
+    </div>
+
+    <div id="queueOverlay" class="overlay-screen" style="display: none;">
+        <div class="overlay-card">
+            <h2>Ваше место занято</h2>
+            <p>В данный момент на сайте находится другой оператор. Вы поставлены в очередь ожидания сессии.</p>
+            <div id="kickTimerContainer" class="kick-timer">Ожидайте освобождения места...</div>
+            <button class="main-action-btn" id="kickBtn" style="margin-top: 20px; display: none;" onclick="forceKickActiveSession()">Освободить место и войти</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainAppContainer">
+        <div class="user-badge-id" id="userSiteIdBadge">ID: Сбор...</div>
+        <div class="polling-indicator" title="Сайт активен"></div>
         <h1>Telegram Sender</h1>
         <div class="subtitle">Secure Messaging System</div>
         
         <div class="input-group">
             <label for="chatId">Код привязки (или ID группы):</label>
             <input type="text" id="chatId" placeholder="Например: 5">
-            <div class="hint">Напишите <b>.привязка</b> в вашей Telegram группе, и бот выдаст вам цифру от 1 до 9. Введите её сюда.</div>
         </div>
 
         <div class="input-group">
             <label for="message">Текст сообщения:</label>
             <textarea id="message" placeholder="Введите ваше сообщение..."></textarea>
+            <div class="hint">
+                <span><b>Enter</b> — отправка. <b>Shift+Enter</b> — перенос.</span>
+                <button class="fix-toggle" id="fixToggle" onclick="toggleAutoFix()">
+                    <span class="dot"></span>
+                    <span id="fixToggleText">Автокоррект 3.0: Выкл</span>
+                </button>
+            </div>
         </div>
 
-        <button id="sendBtn" onclick="sendMessage()">Отправить сообщение</button>
+        <div class="btn-wrapper">
+            <button id="sendBtn" onclick="sendMessage()">
+                <span class="btn-text">Отправить сообщение</span>
+                <span class="success-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 6L9 17L4 12" />
+                    </svg>
+                </span>
+            </button>
+        </div>
         <div id="status"></div>
+
+        <div class="chat-monitor" id="chatMonitor">
+            <div class="chat-monitor-header">
+                <div class="chat-monitor-title">
+                    <span style="display:inline-block; width:6px; height:6px; background:#818cf8; border-radius:50%; animation: pulseCircle 1.5s infinite;"></span>
+                    Живой чат группы
+                </div>
+                <button class="clear-chat-btn" onclick="clearChatLog()">Очистить базу чата</button>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+        </div>
+
+        <div class="error-log-panel">
+            <div class="error-log-header">
+                <span>Консоль отладки ошибок</span>
+                <button class="error-log-clear" onclick="clearErrorLog()">очистить лог</button>
+            </div>
+            <div class="error-log-box" id="errorLog">
+                <div class="error-log-item" style="color: #71717a;">Система запущена. Ошибок не обнаружено.</div>
+            </div>
+        </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, onValue, push, update, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Конфигурация Firebase Realtime Database
+        const firebaseConfig = {
+            apiKey: "AIzaSyBTcH3_tri2L7AHLh1e-YD-0s-QSthuE6Q",
+            authDomain: "disk-c98ee.firebaseapp.com",
+            databaseURL: "https://disk-c98ee-default-rtdb.firebaseio.com",
+            projectId: "disk-c98ee",
+            storageBucket: "disk-c98ee.firebasestorage.app",
+            messagingSenderId: "59577059636",
+            appId: "1:59577059636:web:e98f456d054cc360747d61"
+        };
+
+        // Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         const BOT_TOKEN = '8680944941:AAFzOyJEa2WAqJPCHOFcLnivPagbQ0TXaZA';
         
-        // Храним связки Код -> ChatID в памяти браузера, чтобы не терять при обновлении
-        let chatBindings = JSON.parse(localStorage.getItem('chatBindings') || '{}');
+        // Генерация или получение постоянного ID для этой вкладки
+        let siteUserId = sessionStorage.getItem('siteUserId');
+        if (!siteUserId) {
+            siteUserId = 'User_' + Math.random().toString(36).substring(2, 6) + Math.floor(Math.random() * 100);
+            sessionStorage.setItem('siteUserId', siteUserId);
+        }
+        document.getElementById('userSiteIdBadge').textContent = 'ID: ' + siteUserId;
+
+        let chatBindings = {};
         let lastUpdateId = 0;
+        let autoFixEnabled = false;
+        let isSystemInitialized = false;
+        let hasPasswordInDb = false;
+        let correctPasswordText = "";
+        let queueTimerInterval = null;
+        let isTerminatedByQueue = false; // Маркер принудительного отключения лонг-пуллинга
+        
+        // Переменные для отслеживания ошибок ввода пароля
+        let failedAttempts = 0;
+        let authLockInterval = null;
 
-        // Функция для отслеживания входящих сообщений (Long Polling)
-        async function pollUpdates() {
+        // Привязываем функции к объекту window для доступа из HTML разметки
+        window.sendMessage = sendMessage;
+        window.toggleAutoFix = toggleAutoFix;
+        window.clearChatLog = clearChatLog;
+        window.clearErrorLog = clearErrorLog;
+        window.handleAuthSubmit = handleAuthSubmit;
+        window.forceKickActiveSession = forceKickActiveSession;
+
+        // Точка входа: Проверка пароля и сессии
+        async function initSecurityAndQueueSystem() {
             try {
-                // Запрашиваем новые сообщения у бота
-                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.ok && data.result.length > 0) {
-                    for (const update of data.result) {
-                        lastUpdateId = update.update_id;
-                        
-                        // Если кто-то написал ".привязка"
-                        if (update.message && update.message.text && update.message.text.trim().toLowerCase() === '.привязка') {
-                            const chatId = update.message.chat.id;
-                            
-                            // Генерируем случайный код от 1 до 9
-                            const bindCode = Math.floor(Math.random() * 9) + 1;
-                            
-                            // Запоминаем: код -> ID чата
-                            chatBindings[bindCode.toString()] = chatId;
-                            localStorage.setItem('chatBindings', JSON.stringify(chatBindings));
-                            
-                            // Отвечаем прямо в группу
-                            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    chat_id: chatId,
-                                    text: `✅ <b>Успешно!</b>\nВаш код привязки: <b>${bindCode}</b>\n\nВведите эту цифру на сайте в поле "Код привязки".`,
-                                    parse_mode: 'HTML'
-                                })
-                            });
+                const passwordSnap = await get(ref(db, 'siteSettings/password'));
+                if (passwordSnap.exists()) {
+                    hasPasswordInDb = true;
+                    correctPasswordText = passwordSnap.val();
+                    document.getElementById('authTitle').textContent = "Вход в систему";
+                    document.getElementById('authDesc').textContent = "Введите установленный мастер-пароль для продолжения.";
+                    document.getElementById('authLabel').textContent = "Мастер-пароль:";
+                } else {
+                    hasPasswordInDb = false;
+                    document.getElementById('authTitle').textContent = "Первая настройка";
+                    document.getElementById('authDesc').textContent = "Установите надежный пароль для защиты вашего бэкенда. Он запишется в Firebase.";
+                    document.getElementById('authLabel').textContent = "Придумайте пароль:";
+                }
+                document.getElementById('authOverlay').style.display = 'flex';
+            } catch (e) {
+                pushErrorLog("Ошибка подключения к Firebase: " + e.message);
+            }
+        }
 
-                            // Оповещаем пользователя на сайте
-                            const statusEl = document.getElementById('status');
-                            statusEl.textContent = `✅ Привязка группы к коду ${bindCode} успешна!`;
-                            statusEl.className = 'info';
-                            setTimeout(() => {
-                                if(statusEl.className === 'info') statusEl.textContent = '';
-                            }, 5000);
+        async function handleAuthSubmit() {
+            const inputVal = document.getElementById('authPasswordInput').value.trim();
+            const errorEl = document.getElementById('authError');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const passwordInput = document.getElementById('authPasswordInput');
+            
+            if (!inputVal) {
+                errorEl.textContent = "Поле не может быть пустым!";
+                return;
+            }
+
+            if (!hasPasswordInDb) {
+                // Первый запуск — сохраняем пароль
+                await set(ref(db, 'siteSettings/password'), inputVal);
+                correctPasswordText = inputVal;
+                hasPasswordInDb = true;
+                errorEl.style.color = "#34d399";
+                errorEl.textContent = "Пароль успешно задан! Подключение...";
+                setTimeout(() => { proceedToQueueValidation(); }, 1000);
+            } else {
+                // Проверяем существующий пароль
+                if (inputVal === correctPasswordText) {
+                    errorEl.textContent = "";
+                    failedAttempts = 0; // Сбрасываем попытки при успехе
+                    proceedToQueueValidation();
+                } else {
+                    failedAttempts++;
+                    // Вычисление времени ожидания: 1 раз = 3с, 2 раза = 5с, 3 раза = 7с и т.д.
+                    let lockTime = 1 + (failedAttempts * 2);
+                    
+                    errorEl.style.color = "#f87171";
+                    submitBtn.disabled = true;
+                    passwordInput.disabled = true;
+                    
+                    clearInterval(authLockInterval);
+                    authLockInterval = setInterval(() => {
+                        lockTime--;
+                        if (lockTime > 0) {
+                            errorEl.textContent = `Неверный пароль. Доступ заблокирован! Повтор через ${lockTime} сек.`;
+                        } else {
+                            clearInterval(authLockInterval);
+                            errorEl.textContent = "Вы можете попробовать ввести пароль снова.";
+                            submitBtn.disabled = false;
+                            passwordInput.disabled = false;
+                            passwordInput.focus();
+                        }
+                    }, 1000);
+                    
+                    // Первичное мгновенное отображение текста ошибки
+                    errorEl.textContent = `Неверный пароль. Доступ заблокирован! Повтор через ${lockTime} сек.`;
+                }
+            }
+        }
+
+        // Логика проверки активного места
+        function proceedToQueueValidation() {
+            document.getElementById('authOverlay').style.display = 'none';
+            
+            const sessionRef = ref(db, 'activeSession');
+            
+            onValue(sessionRef, (snapshot) => {
+                const active = snapshot.val();
+                
+                if (!active || active.userId === siteUserId) {
+                    // Место свободно или уже занято нами
+                    clearInterval(queueTimerInterval);
+                    document.getElementById('queueOverlay').style.display = 'none';
+                    document.getElementById('mainAppContainer').style.display = 'block';
+                    isTerminatedByQueue = false; // Возвращаем активность лонг-пуллинга
+                    
+                    if (!isSystemInitialized) {
+                        // Занимаем ячейку на бэке и вешаем автоудаление при дисконнекте
+                        set(sessionRef, {
+                            userId: siteUserId,
+                            claimedAt: serverTimestamp()
+                        });
+                        onDisconnect(sessionRef).remove();
+                        
+                        startMainAppLogic();
+                        isSystemInitialized = true;
+                    }
+                } else {
+                    // Место занято кем-то другим — жестко отключаем старую вкладку от лонг-пуллинга
+                    isTerminatedByQueue = true;
+                    isSystemInitialized = false; 
+                    document.getElementById('mainAppContainer').style.display = 'none';
+                    document.getElementById('queueOverlay').style.display = 'flex';
+                    
+                    const claimedTime = active.claimedAt || Date.now();
+                    startQueueCountdown(claimedTime);
+                }
+            });
+        }
+
+        function startQueueCountdown(claimedTime) {
+            clearInterval(queueTimerInterval);
+            const kickBtn = document.getElementById('kickBtn');
+            const timerText = document.getElementById('kickTimerContainer');
+            
+            function updateTimer() {
+                const elapsedSeconds = Math.floor((Date.now() - claimedTime) / 1000);
+                const remaining = 60 - elapsedSeconds;
+                
+                if (remaining > 0) {
+                    kickBtn.style.display = 'none';
+                    timerText.textContent = `Кнопка освобождения места появится через: ${remaining} сек.`;
+                } else {
+                    clearInterval(queueTimerInterval);
+                    timerText.textContent = "Время ожидания превысило 1 минуту.";
+                    kickBtn.style.display = 'block';
+                }
+            }
+            
+            updateTimer();
+            queueTimerInterval = setInterval(updateTimer, 1000);
+        }
+
+        async function forceKickActiveSession() {
+            clearInterval(queueTimerInterval);
+            pushErrorLog("Вытеснение предыдущей сессии...");
+            await set(ref(db, 'activeSession'), {
+                userId: siteUserId,
+                claimedAt: serverTimestamp()
+            });
+        }
+
+        // Основная рабочая логика приложения после входа
+        function startMainAppLogic() {
+            // Подгрузка привязок кодов из бэка
+            onValue(ref(db, 'chatBindings'), (snapshot) => {
+                if (snapshot.exists()) {
+                    chatBindings = snapshot.val();
+                }
+            });
+
+            // Подгрузка и живая синхронизация истории сообщений с бэка Firebase
+            onValue(ref(db, 'chatMessages'), (snapshot) => {
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = ''; 
+                
+                if (snapshot.exists()) {
+                    ensureChatVisible();
+                    const data = snapshot.val();
+                    const sortedKeys = Object.keys(data).sort((a, b) => data[a].timestamp - data[b].timestamp);
+                    
+                    sortedKeys.forEach(key => {
+                        const msg = data[key];
+                        let displayAuthor = msg.senderName;
+                        if (msg.siteSenderId) {
+                            displayAuthor = `${msg.senderName} [${msg.siteSenderId}]`;
+                        }
+                        renderMessageNode(msg.type, displayAuthor, msg.text, msg.timestamp, msg.userId, msg.fileId, msg.msgTelegramId, msg.isDeleted);
+                    });
+                }
+            });
+
+            clearWebhookAndRun();
+        }
+
+        function pushErrorLog(message) {
+            const logBox = document.getElementById('errorLog');
+            const time = formatTime(null);
+            
+            if (logBox.innerHTML.includes('Ошибок не обнаружено')) {
+                logBox.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'error-log-item';
+            item.innerHTML = `<span class="error-log-time">[${time}]</span>${escapeHtml(message)}`;
+            logBox.appendChild(item);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function clearErrorLog() {
+            document.getElementById('errorLog').innerHTML = '<div class="error-log-item" style="color: #71717a;">Лог очищен. Ошибок не обнаружено.</div>';
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function toggleAutoFix() {
+            const toggleBtn = document.getElementById('fixToggle');
+            const toggleText = document.getElementById('fixToggleText');
+            autoFixEnabled = !autoFixEnabled;
+            if (autoFixEnabled) {
+                toggleBtn.classList.add('enabled');
+                toggleText.textContent = 'Автокоррект 3.0: Вкл';
+            } else {
+                toggleBtn.classList.remove('enabled');
+                toggleText.textContent = 'Автокоррект 3.0: Выкл';
+            }
+        }
+
+        function autoFixText() {
+            const textarea = document.getElementById('message');
+            let text = textarea.value;
+            if (!text.trim()) return;
+
+            text = text.replace(/ +/g, ' ');
+
+            const vocabulary = [
+                { wrong: /\b(врем[тнмияя])\b/gi, right: 'время' },
+                { wrong: /\b(приве[ттмае])\b/gi, right: 'привет' },
+                { wrong: /\b(отпр[оа]в[лнм]?я?[тьюие]?)\b/gi, right: 'отправить' },
+                { wrong: /\b(соо[бп]щ[еи][нм]и[ея])\b/gi, right: 'сообщение' },
+                { wrong: /\b(во[о]?бще)\b/gi, right: 'вообще' },
+                { wrong: /\b(какой\s*то)\b/gi, right: 'какой-то' },
+                { wrong: /\b(кто\s*то)\b/gi, right: 'кто-то' },
+                { wrong: /\b(что\s*то)\b/gi, right: 'что-то' },
+                { wrong: /\b(когда\s*то)\b/gi, right: 'когда-то' },
+                { wrong: /\b(из\s+за)\b/gi, right: 'из-за' },
+                { wrong: /\b(щ[ая]с|ща|сейч[ая]с)\b/gi, right: 'сейчас' },
+                { wrong: /\b(пож[ао]луйс?т[ао])\b/gi, right: 'пожалуйста' }
+            ];
+            vocabulary.forEach(item => {
+                text = text.replace(item.wrong, item.right);
+            });
+
+            text = text.replace(/,+/, ',');
+            text = text.replace(/;+/, ';');
+            text = text.replace(/:+/, ':');
+            text = text.replace(/\.{4,}/g, '...');
+            
+            text = text.replace(/([.,!?;:–])([а-яА-Яa-zA-Z0-9])/g, '$1 $2');
+            text = text.replace(/\s+([.,!?;:])/g, '$1');
+
+            text = text.replace(/([^\.,!\?;\s:\-])\s+\b(а|но|что|чтобы|потому\s+что|если|хотя)\b/gi, '$1, $2');
+
+            text = text.replace(/(^\s*|[.!?]\s+)([а-яёa-z])/g, function(match, prefix, char) {
+                return prefix + char.toUpperCase();
+            });
+
+            text = text.trim();
+            text = text.replace(/[\s\\\/.,;:]+$/, '');
+
+            text = text.trim();
+            if (text && !/[.!?]$/.test(text)) {
+                text += '.';
+            }
+
+            textarea.value = text;
+        }
+
+        async function clearChatLog() {
+            if(confirm("Вы действительно хотите полностью очистить бэкенд базу сообщений?")) {
+                await set(ref(db, 'chatMessages'), null);
+                document.getElementById('chatMessages').innerHTML = '';
+            }
+        }
+
+        function ensureChatVisible() {
+            const monitor = document.getElementById('chatMonitor');
+            monitor.classList.add('active');
+        }
+
+        function formatTime(timestampSeconds) {
+            const date = timestampSeconds ? new Date(timestampSeconds * 1000) : new Date();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        async function getUserAvatarUrl(chatOrUserId) {
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${chatOrUserId}&limit=1`);
+                const data = await res.json();
+                if (data.ok && data.result && data.result.total_count > 0) {
+                    const fileId = data.result.photos[0][0].file_id;
+                    const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+                    const fileData = await fileRes.json();
+                    if (fileData.ok && fileData.result) {
+                        return `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+                    }
+                }
+            } catch (e) {
+                // Игнорируем ошибки аватарок
+            }
+            return null;
+        }
+
+        function renderMessageNode(type, senderName, text, timestamp, userId, fileId, msgTelegramId, isDeleted = false) {
+            const container = document.getElementById('chatMessages');
+            
+            const msgItem = document.createElement('div');
+            msgItem.className = `msg-item ${type === 'own' ? 'msg-own' : 'msg-group'}`;
+            if (msgTelegramId) {
+                msgItem.setAttribute('data-tg-id', msgTelegramId);
+            }
+            if (isDeleted) {
+                msgItem.classList.add('msg-deleted');
+            }
+
+            const avatarEl = document.createElement('div');
+            avatarEl.className = 'msg-avatar';
+            avatarEl.textContent = senderName.charAt(0).toUpperCase();
+
+            if (userId && type === 'group') {
+                getUserAvatarUrl(userId).then(src => {
+                    if (src) avatarEl.innerHTML = `<img src="${src}" alt="avatar">`;
+                });
+            }
+
+            const contentEl = document.createElement('div');
+            contentEl.className = 'msg-content';
+
+            const headerEl = document.createElement('div');
+            headerEl.className = 'msg-header';
+
+            const authorWrapper = document.createElement('div');
+            authorWrapper.style.display = 'flex';
+            authorWrapper.style.alignItems = 'center';
+            authorWrapper.style.gap = '6px';
+
+            const authorEl = document.createElement('div');
+            authorEl.className = 'msg-author';
+            authorEl.textContent = senderName;
+            authorWrapper.appendChild(authorEl);
+
+            if (isDeleted) {
+                const badge = document.createElement('span');
+                badge.className = 'msg-deleted-badge';
+                badge.textContent = 'Удалено / Изменено в TG';
+                authorWrapper.appendChild(badge);
+            }
+
+            const timeEl = document.createElement('div');
+            timeEl.className = 'msg-time';
+            timeEl.textContent = formatTime(timestamp);
+
+            headerEl.appendChild(authorWrapper);
+            headerEl.appendChild(timeEl);
+            contentEl.appendChild(headerEl);
+
+            if (text) {
+                const textEl = document.createElement('div');
+                textEl.className = 'msg-text';
+                textEl.textContent = text;
+                contentEl.appendChild(textEl);
+            }
+
+            if (fileId) {
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`)
+                    .then(res => res.json())
+                    .then(fileData => {
+                        if (fileData.ok && fileData.result) {
+                            const mediaUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+                            const mediaWrapper = document.createElement('div');
+                            mediaWrapper.className = 'msg-media';
+                            mediaWrapper.innerHTML = `<img src="${mediaUrl}" alt="Telegram Photo" onclick="window.open('${mediaUrl}', '_blank')">`;
+                            contentEl.appendChild(mediaWrapper);
+                        }
+                    }).catch(err => pushErrorLog("Не удалось загрузить медиафайл: " + err.message));
+            }
+
+            msgItem.appendChild(avatarEl);
+            msgItem.appendChild(contentEl);
+            container.insertBefore(msgItem, container.firstChild);
+        }
+
+        // Помечаем сообщение как удаленное в Firebase Realtime Database
+        async function markMessageAsDeletedOnBackend(msgTelegramId) {
+            try {
+                const messagesSnap = await get(ref(db, 'chatMessages'));
+                if (messagesSnap.exists()) {
+                    const allMsgs = messagesSnap.val();
+                    for (let nodeKey in allMsgs) {
+                        if (allMsgs[nodeKey].msgTelegramId == msgTelegramId) {
+                            await update(ref(db, `chatMessages/${nodeKey}`), { isDeleted: true });
+                            break;
                         }
                     }
                 }
             } catch (e) {
-                console.error("Polling error:", e);
+                pushErrorLog("Ошибка изменения статуса на бэкенде: " + e.message);
             }
-            
-            // Запускаем снова для непрерывного прослушивания
+        }
+
+        // Запись сообщения в Firebase Realtime Database
+        async function addMessageToFirebaseBackend(type, senderName, text, timestamp, userId = null, fileId = null, msgTelegramId = null, siteSenderId = null) {
+            const newMsgRef = push(ref(db, 'chatMessages'));
+            await set(newMsgRef, {
+                type,
+                senderName,
+                text,
+                timestamp,
+                userId,
+                fileId,
+                msgTelegramId,
+                siteSenderId,
+                isDeleted: false
+            });
+        }
+
+        async function clearWebhookAndRun() {
+            try {
+                pushErrorLog("Проверка и очистка конфликтующих вебхуков...");
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`);
+                const data = await response.json();
+                if(data.ok) {
+                    pushErrorLog("Конфликты API успешно устранены. Запуск мониторинга чата.");
+                }
+            } catch (e) {
+                pushErrorLog("Не удалось автоматически сбросить вебхук: " + e.message);
+            }
             pollUpdates();
         }
 
-        // Начинаем слушать входящие сообщения
-        pollUpdates();
+        async function pollUpdates() {
+            // МГНОВЕННЫЙ ОБРЫВ СВЯЗИ: если сессия вытеснена другим окном, полностью выходим из рекурсии getUpdates
+            if (isTerminatedByQueue) {
+                pushErrorLog("Мониторинг остановлен: сессия перехвачена другим окном.");
+                return;
+            }
+
+            try {
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30&allowed_updates=["message","edited_message"]`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP статус сервера: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.ok) {
+                    throw new Error(`API Telegram вернул ошибку: ${data.description}`);
+                }
+                
+                if (data.result.length > 0) {
+                    for (const update of data.result) {
+                        lastUpdateId = update.update_id;
+                        
+                        if (update.edited_message) {
+                            const edMsg = update.edited_message;
+                            await markMessageAsDeletedOnBackend(edMsg.message_id);
+                            continue;
+                        }
+
+                        if (update.message) {
+                            const msg = update.message;
+                            const currentText = msg.text ? msg.text.trim() : '';
+                            
+                            if (currentText === '.' || currentText === '...') {
+                                continue;
+                            }
+                            
+                            let senderName = 'Пользователь';
+                            let userId = null;
+                            if (msg.from) {
+                                userId = msg.from.id;
+                                senderName = msg.from.first_name + (msg.from.last_name ? ' ' + msg.from.last_name : '');
+                                if (msg.from.username) senderName += ` (@${msg.from.username})`;
+                            }
+
+                            let photoFileId = null;
+                            if (msg.photo && msg.photo.length > 0) {
+                                photoFileId = msg.photo[msg.photo.length - 1].file_id;
+                            }
+
+                            const captionText = msg.caption ? msg.caption.trim() : '';
+                            const finalMsgText = currentText || captionText;
+
+                            if (finalMsgText || photoFileId) {
+                                if (finalMsgText && finalMsgText.toLowerCase() === '.привязка') {
+                                    const chatId = msg.chat.id;
+                                    const bindCode = Math.floor(Math.random() * 9) + 1;
+                                    
+                                    await set(ref(db, `chatBindings/${bindCode}`), chatId);
+                                    
+                                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({
+                                            chat_id: chatId,
+                                            text: `✅ <b>Успешно!</b>\nВаш код привязки: <b>${bindCode}</b>\n\nВведите эту цифру на сайте в поле "Код привязки".`,
+                                            parse_mode: 'HTML'
+                                        })
+                                    });
+
+                                    const statusEl = document.getElementById('status');
+                                    statusEl.textContent = `✅ Привязка группы к коду ${bindCode} успешна!`;
+                                    statusEl.className = 'info';
+                                    setTimeout(() => {
+                                        if(statusEl.className === 'info') statusEl.textContent = '';
+                                    }, 5000);
+                                } else {
+                                    await addMessageToFirebaseBackend('group', senderName, finalMsgText, msg.date, userId, photoFileId, msg.message_id, null);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // Если во время ожидания fetch вкладку вытеснили — не логируем ошибку 409 и жестко прерываем выполнение
+                if (isTerminatedByQueue || e.message.includes('409')) {
+                    return;
+                }
+                pushErrorLog("Ошибка лонг-пуллинга: " + e.message);
+            }
+            
+            // Запускаем следующий шаг, только если сессия всё ещё валидна
+            if (!isTerminatedByQueue) {
+                setTimeout(pollUpdates, document.hidden ? 1000 : 100);
+            }
+        }
 
         async function sendMessage() {
+            if (autoFixEnabled) {
+                autoFixText();
+            }
+
             const inputValue = document.getElementById('chatId').value.trim();
             const message = document.getElementById('message').value.trim();
             const statusEl = document.getElementById('status');
@@ -268,22 +1365,22 @@
             if (!inputValue || !message) {
                 statusEl.textContent = 'Пожалуйста, заполните все поля!';
                 statusEl.className = 'error';
+                pushErrorLog("Ошибка отправки: Поля ввода пустые.");
                 return;
             }
 
-            // Проверяем, есть ли такой код в памяти. Если нет - пробуем использовать сам ввод как ID.
             const realChatId = chatBindings[inputValue] || inputValue;
 
-            statusEl.textContent = 'Отправка...';
+            statusEl.textContent = '';
             statusEl.className = '';
+            
             btn.disabled = true;
+            btn.classList.add('loading');
 
             try {
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: realChatId,
                         text: message,
@@ -294,27 +1391,41 @@
                 const data = await response.json();
 
                 if (data.ok) {
-                    statusEl.textContent = '✅ Сообщение успешно отправлено!';
-                    statusEl.className = 'success';
+                    btn.classList.remove('loading');
+                    btn.classList.add('sent');
+                    
+                    await addMessageToFirebaseBackend('own', 'Вы (Сайт)', message, Math.floor(Date.now() / 1000), null, null, data.result.message_id, siteUserId);
                     document.getElementById('message').value = ''; 
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('sent');
+                        btn.disabled = false;
+                    }, 2200);
+
                 } else {
-                    statusEl.textContent = '❌ Ошибка: ' + (data.description || 'Неизвестная ошибка');
+                    let friendlyErr = '❌ Ошибка отправки. Чат не найден.';
+                    if (data.error_code === 400 && data.description.includes('chat not found')) {
+                        friendlyErr = `❌ Код "${inputValue}" не привязан! Введите рабочий ID или отправьте команду .привязка в чате.`;
+                    } else {
+                        friendlyErr = '❌ Ошибка: ' + (data.description || 'Неизвестная ошибка');
+                    }
+                    statusEl.textContent = friendlyErr;
                     statusEl.className = 'error';
+                    pushErrorLog(`Запрос sendMessage отклонен Telegram API: [${data.error_code}] ${data.description}`);
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
                 }
             } catch (error) {
                 statusEl.textContent = '❌ Ошибка сети при отправке.';
                 statusEl.className = 'error';
-            } finally {
+                pushErrorLog("Сбой сети при выполнении fetch() на sendMessage: " + error.message);
+                btn.classList.remove('loading');
                 btn.disabled = false;
-                
-                setTimeout(() => {
-                    if(statusEl.className === 'success') {
-                        statusEl.textContent = '';
-                        statusEl.className = '';
-                    }
-                }, 3000);
             }
         }
+
+        // Запуск проверки безопасности при загрузке скрипта
+        initSecurityAndQueueSystem();
     </script>
 </body>
 </html>
